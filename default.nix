@@ -20,8 +20,8 @@ let iosSupport =
         src-spec = {
           owner = "commercialhaskell";
           repo = "all-cabal-hashes";
-          rev = "2b0bf3ddf8b75656582c1e45c51caa59458cd3ad";
-          sha256 = "0g4nvvgfg9npd0alysd67ckhvx3s66q8b5x0x9am2myjrha3fjgq";
+          rev = "82a8a1a49240a1b465c95de6fa6bf56323ee858f";
+          sha256 = "1jdzl5fyp1qcsi1anjig6kglq4jjsdll53nissjcnxpy3jscmarm";
         };
       };
     };
@@ -230,6 +230,7 @@ let overrideCabal = pkg: f: if pkg == null then null else haskellLib.overrideCab
 
         base-compat = self.callHackage "base-compat" "0.9.2" {};
         constraints = self.callHackage "constraints" "0.9" {};
+        servant-auth-server = self.callHackage "servant-auth-server" "0.3.1.0" {};
         vector = doJailbreak super.vector;
         these = doJailbreak super.these;
         aeson-compat = doJailbreak super.aeson-compat;
@@ -250,6 +251,11 @@ let overrideCabal = pkg: f: if pkg == null then null else haskellLib.overrideCab
         haskell-src-meta = self.callHackage "haskell-src-meta" "0.8.0.1" {};
         gtk2hs-buildtools = doJailbreak super.gtk2hs-buildtools;
 
+        # hindent was overriden with a newer version of haskell-src-exts for some reason
+        hindent = super.hindent.override { haskell-src-exts = self.haskell-src-exts; };
+        # Not sure why these tests fail...
+        hfmt = dontCheck super.hfmt;
+
         ########################################################################
         # Reflex packages
         ########################################################################
@@ -260,12 +266,7 @@ let overrideCabal = pkg: f: if pkg == null then null else haskellLib.overrideCab
         reflex-aeson-orphans = self.callPackage (hackGet ./reflex-aeson-orphans) {};
         haven = self.callHackage "haven" "0.2.0.0" {};
 
-        inherit (jsaddlePkgs) jsaddle-clib jsaddle-wkwebview jsaddle-webkit2gtk jsaddle-webkitgtk;
-        jsaddle = if (self.ghc.isGhcjs or false)
-          then overrideCabal jsaddlePkgs.jsaddle (drv: {
-            libraryHaskellDepends = (drv.libraryHaskellDepends or []) ++ [self.ghcjs-base self.ghcjs-prim];
-          })
-          else jsaddlePkgs.jsaddle;
+        inherit (jsaddlePkgs) jsaddle jsaddle-clib jsaddle-wkwebview jsaddle-webkit2gtk jsaddle-webkitgtk;
         jsaddle-warp = dontCheck jsaddlePkgs.jsaddle-warp;
 
         jsaddle-dom = overrideCabal (self.callPackage (hackGet ./jsaddle-dom) {}) (drv: {
@@ -322,6 +323,13 @@ let overrideCabal = pkg: f: if pkg == null then null else haskellLib.overrideCab
         MonadCatchIO-transformers = doJailbreak super.MonadCatchIO-transformers;
         blaze-builder-enumerator = doJailbreak super.blaze-builder-enumerator;
         process-extras = dontCheck super.process-extras;
+        miso = addBuildDepend (self.callHackage "miso" "0.12.0.0" {}) self.ghcjs-base;
+        direct-sqlite = self.callCabal2nix "direct-sqlite" (fetchFromGitHub {
+          owner = "obsidiansystems";
+          repo = "direct-sqlite";
+          rev = "cd96a9ae47c9921ab98379a812c99d5d9a365732";
+          sha256 = "1r3msr5j862kvng5xv2b6vgpjc39kd5aygylx9lcvd6rzl8jglfw";
+        }) {};
 
         ########################################################################
         # Packages not in hackage

@@ -11,9 +11,12 @@ typedef struct ActivityCallbacks {
   void (*onStop) ();
   void (*onDestroy) ();
   void (*onRestart) ();
+  void (*onBackPressed) ();
   void (*onNewIntent) (const char *, const char *); //TODO: Pass the whole argument and use JNI
 } ActivityCallbacks;
 
 extern JavaVM* HaskellActivity_jvm;
+
+extern jobject HaskellActivity_get();
 
 #endif
